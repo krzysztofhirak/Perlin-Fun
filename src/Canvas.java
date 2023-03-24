@@ -4,15 +4,31 @@ import java.awt.image.BufferedImage;
 
 public class Canvas extends JPanel {
     public double[][] canvas;
-    Dimension size;
+    Dimension panelSize;
+    Dimension imageSize;
     BufferedImage image;
 
     public Canvas(Dimension size){
-        this.size = size;
+        this.panelSize = size;
+        this.imageSize = size;
         setSize(size);
-        canvas = new double[getWidth()][getHeight()];
+        canvas = new double[imageSize.width][imageSize.height];
 
-//        canvas = Noise(4, 2);
+        canvas = MultipleNoises();
+        canvas = mapToZeroOne(canvas);
+        image = toImage(canvas);
+
+        ExportImageOnKeyPress listener = new ExportImageOnKeyPress(image);
+        addKeyListener(listener);
+        setFocusable(true);
+    }
+
+    public Canvas(Dimension panelSize, Dimension imageSize){
+        this.panelSize = panelSize;
+        this.imageSize = imageSize;
+        setSize(panelSize);
+        canvas = new double[imageSize.width][imageSize.height];
+
         canvas = MultipleNoises();
         canvas = mapToZeroOne(canvas);
         image = toImage(canvas);
@@ -23,12 +39,12 @@ public class Canvas extends JPanel {
     }
 
     private double[][] Noise(int octaves, int persistence){
-        double[][] result = new double[getWidth()][getHeight()];
+        double[][] result = new double[imageSize.width][imageSize.height];
         PerlinNoise.newPermutation();
         PerlinNoise perlin = new PerlinNoise();
         for(int x = 0; x < canvas.length; x++){
             for(int y = 0; y < canvas[0].length; y++){
-                result[x][y] = perlin.octavePerlin((double) x/getWidth(), (double) y/getHeight(), 0, octaves, persistence);
+                result[x][y] = perlin.octavePerlin((double) x/imageSize.width, (double) y/imageSize.height, 0, octaves, persistence);
             }
         }
         return result;
@@ -39,8 +55,8 @@ public class Canvas extends JPanel {
         result = Noise(2, 2);
         result = add(result, Noise(3, 2));
         result = add(result, Noise(4, 2));
-//        result = add(result, Noise(5, 2));
-//        result = add(result, Noise(6, 2));
+        result = add(result, Noise(5, 2));
+        result = add(result, Noise(6, 2));
         return result;
     }
 
@@ -133,7 +149,8 @@ public class Canvas extends JPanel {
 //        RainbowNoise();
         Noise2();
 
-        g.drawImage(image, 0, 0, null);
+        Image scaledImage = image.getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
+        g.drawImage(scaledImage, 0, 0, null);
     }
 
     private void DefaultPerlinNoise(Graphics g){
@@ -149,21 +166,21 @@ public class Canvas extends JPanel {
     }
 
     private void Noise1(){
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 image.setRGB(x, y, Color.WHITE.getRGB());
             }
         }
 
-        int[][] amount = new int[getWidth()][getHeight()];
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        int[][] amount = new int[imageSize.width][imageSize.height];
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 amount[x][y] = 255;
             }
         }
 
-        for(int x = 0; x < getWidth(); x += 1){
-            for(int y = 0; y < getHeight(); y += 1){
+        for(int x = 0; x < imageSize.width; x += 1){
+            for(int y = 0; y < imageSize.height; y += 1){
                 if(inBounds(x, y)){
                     double[] first = {x, y, canvas[x][y]};
                     double[] next = null;
@@ -180,8 +197,8 @@ public class Canvas extends JPanel {
             }
         }
 
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 if(amount[x][y] < 0) amount[x][y] = 0;
                 image.setRGB(x, y, new Color(amount[x][y], 0, 0).getRGB());
             }
@@ -189,20 +206,19 @@ public class Canvas extends JPanel {
     }
 
     private void Noise2(){
-        int[][] values = new int[getWidth()][getHeight()];
+        int[][] values = new int[imageSize.width][imageSize.height];
 
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 values[x][y] = 255;
             }
         }
 
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 double[] next = new double[3];
                 next[0] = x; next[1] = y; next[2] = canvas[x][y];
                 for(int i = 0; i < 255; i++){
-//                    next = nextPixel4D(next);
                     next = nextPixel(next);
                     if(next[0] != -1 && next[1] != -1 && values[(int) next[0]][(int) next[1]] > 0){
                         values[(int) next[0]][(int) next[1]]--;
@@ -211,8 +227,8 @@ public class Canvas extends JPanel {
             }
         }
 
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 Color color = new Color(values[x][y], values[x][y], values[x][y]);
                 image.setRGB(x, y, color.getRGB());
             }
@@ -220,8 +236,8 @@ public class Canvas extends JPanel {
     }
 
     private void IsohipsNoise(){
-        for(int x = 0; x < getWidth(); x++){
-            for(int y = 0; y < getHeight(); y++){
+        for(int x = 0; x < imageSize.width; x++){
+            for(int y = 0; y < imageSize.height; y++){
                 if((int)(canvas[x][y] * 10) % 2 == 0){
                     image.setRGB(x, y, Color.WHITE.getRGB());
                 } else image.setRGB(x, y, Color.BLACK.getRGB());
@@ -230,8 +246,8 @@ public class Canvas extends JPanel {
     }
 
     private void RainbowNoise(){
-        for(int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
                 int rgb = Color.HSBtoRGB((float) canvas[x][y], 1, 1);
                 image.setRGB(x, y, rgb);
             }
@@ -277,14 +293,14 @@ public class Canvas extends JPanel {
 
         if(out[0] < 0) out[0] = 0;
         if(out[1] < 0) out[1] = 0;
-        if(out[0] >= getWidth()) out[0] = getWidth()-1;
-        if(out[1] >=  getHeight()) out[1] = getHeight()-1;
+        if(out[0] >= imageSize.width) out[0] = imageSize.width-1;
+        if(out[1] >=  imageSize.height) out[1] = imageSize.height-1;
         int newX = (int) Math.round(out[0]);
         int newY = (int) Math.round(out[1]);
         if(newX < 0) newX = 0;
         if(newY < 0) newY = 0;
-        if(newX >= getWidth()) newX = getWidth()-1;
-        if(newY >=  getHeight()) newY = getHeight()-1;
+        if(newX >= imageSize.width) newX = imageSize.width-1;
+        if(newY >=  imageSize.height) newY = imageSize.height-1;
         out[2] = canvas[newX][newY];
 
         return out;
@@ -308,7 +324,7 @@ public class Canvas extends JPanel {
     }
 
     private boolean inBounds(int x, int y){
-        return x >= 0 && x < getWidth() && y >= 0 && y < getHeight();
+        return x >= 0 && x < imageSize.width && y >= 0 && y < imageSize.height;
     }
 
     private static double[] getCirclePosition(double angle, int length) {
