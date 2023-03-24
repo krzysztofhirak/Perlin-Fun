@@ -130,7 +130,8 @@ public class Canvas extends JPanel {
         // Enter noise function
 //        DefaultPerlinNoise();
 //        IsohipsNoise();
-        RainbowNoise();
+//        RainbowNoise();
+        Noise2();
 
         g.drawImage(image, 0, 0, null);
     }
@@ -187,6 +188,39 @@ public class Canvas extends JPanel {
         }
     }
 
+    private void Noise2(){
+        int[][] values = new int[getWidth()][getHeight()];
+
+        for(int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                values[x][y] = 255;
+            }
+        }
+
+        for(int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                double[] next = new double[3];
+                next[0] = x; next[1] = y; next[2] = canvas[x][y];
+                for(int i = 0; i < 255; i++){
+//                    System.out.println(next[0] + " " + next[1] + " " + next[2]);
+                    next = nextPixel(next);
+                    if(next[0] != -1 && next[1] != -1 && values[(int) next[0]][(int) next[1]] > 0){
+                        values[(int) next[0]][(int) next[1]]--;
+                    }
+                }
+            }
+        }
+
+        for(int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                Color color = new Color(values[x][y], values[x][y], values[x][y]);
+                image.setRGB(x, y, color.getRGB());
+            }
+        }
+
+        System.out.println("Done.");
+    }
+
     private void IsohipsNoise(){
         for(int x = 0; x < getWidth(); x++){
             for(int y = 0; y < getHeight(); y++){
@@ -204,6 +238,23 @@ public class Canvas extends JPanel {
                 image.setRGB(x, y, rgb);
             }
         }
+    }
+
+    private double[] nextPixel(double[] pixel){
+        double[] out = new double[3];
+        int x = (int) pixel[0];
+        int y = (int) pixel[1];
+        if(pixel[2] <= 0.0625 || pixel[2] > 0.9375) { if(inBounds(x, y-1)) { out[0]=x; out[1]=y-1; out[2] = canvas[x][y-1]; } }
+        else if(pixel[2] <= 0.1875) { if(inBounds(x+1, y-1)) { out[0]=x+1; out[1]=y-1; out[2] = canvas[x+1][y-1]; } }
+        else if(pixel[2] <= 0.3125) { if(inBounds(x+1, y)) { out[0]=x+1; out[1]=y; out[2] = canvas[x+1][y]; } }
+        else if(pixel[2] <= 0.4375) { if(inBounds(x+1, y+1)) { out[0]=x+1; out[1]=y+1; out[2] = canvas[x+1][y+1]; } }
+        else if(pixel[2] <= 0.5625) { if(inBounds(x, y+1)) { out[0]=x; out[1]=y+1; out[2] = canvas[x][y+1]; } }
+        else if(pixel[2] <= 0.6875) { if(inBounds(x-1, y+1)) { out[0]=x-1; out[1]=y+1; out[2] = canvas[x-1][y+1]; } }
+        else if(pixel[2] <= 0.8125) { if(inBounds(x-1, y)) { out[0]=x-1; out[1]=y; out[2] = canvas[x-1][y]; } }
+        else if(pixel[2] <= 0.9375) { if(inBounds(x-1, y-1)) { out[0]=x-1; out[1]=y-1; out[2] = canvas[x-1][y-1]; } }
+//        else out[0] = -1; out[1] = -1; out[2] = -1;
+//        System.out.println(out[0] + " " + out[1] + " " + out[2]);
+        return out;
     }
 
     private double[] nextHigher(double[] max){
