@@ -35,11 +35,11 @@ public class Canvas extends JPanel {
     }
 
     private double[][] MultipleNoises(){
-        double[][] result = new double[getWidth()][getHeight()];
+        double[][] result;
         result = Noise(2, 2);
         result = add(result, Noise(3, 2));
         result = add(result, Noise(4, 2));
-        result = add(result, Noise(5, 2));
+//        result = add(result, Noise(5, 2));
 //        result = add(result, Noise(6, 2));
         return result;
     }
@@ -142,7 +142,7 @@ public class Canvas extends JPanel {
         int spaces = 8;
         for(int x = 0; x < canvas.length; x = x + spaces){
             for(int y = 0; y < canvas[0].length; y = y + spaces){
-                int length = 8;
+//                int length = 8;
 //                g.drawLine(x, y, x + (int)getCirclePosition(canvas[x][y], length)[0], y + (int)getCirclePosition(canvas[x][y], length)[1]);
             }
         }
@@ -202,7 +202,7 @@ public class Canvas extends JPanel {
                 double[] next = new double[3];
                 next[0] = x; next[1] = y; next[2] = canvas[x][y];
                 for(int i = 0; i < 255; i++){
-//                    System.out.println(next[0] + " " + next[1] + " " + next[2]);
+//                    next = nextPixel4D(next);
                     next = nextPixel(next);
                     if(next[0] != -1 && next[1] != -1 && values[(int) next[0]][(int) next[1]] > 0){
                         values[(int) next[0]][(int) next[1]]--;
@@ -217,8 +217,6 @@ public class Canvas extends JPanel {
                 image.setRGB(x, y, color.getRGB());
             }
         }
-
-        System.out.println("Done.");
     }
 
     private void IsohipsNoise(){
@@ -240,7 +238,7 @@ public class Canvas extends JPanel {
         }
     }
 
-    private double[] nextPixel(double[] pixel){
+    private double[] nextPixel8D(double[] pixel){
         double[] out = new double[3];
         int x = (int) pixel[0];
         int y = (int) pixel[1];
@@ -254,6 +252,41 @@ public class Canvas extends JPanel {
         else if(pixel[2] <= 0.9375) { if(inBounds(x-1, y-1)) { out[0]=x-1; out[1]=y-1; out[2] = canvas[x-1][y-1]; } }
 //        else out[0] = -1; out[1] = -1; out[2] = -1;
 //        System.out.println(out[0] + " " + out[1] + " " + out[2]);
+        return out;
+    }
+
+    private double[] nextPixel4D(double[] pixel){
+        double[] out = new double[3];
+        int x = (int) pixel[0];
+        int y = (int) pixel[1];
+        if(pixel[2] <= 0.125 || pixel[2] > 0.825) { if(inBounds(x, y-1)) { out[0]=x; out[1]=y-1; out[2] = canvas[x][y-1]; } }
+        else if(pixel[2] <= 0.375) { if(inBounds(x+1, y)) { out[0]=x+1; out[1]=y; out[2] = canvas[x+1][y]; } }
+        else if(pixel[2] <= 0.625) { if(inBounds(x, y+1)) { out[0]=x; out[1]=y+1; out[2] = canvas[x][y+1]; } }
+        else if(pixel[2] <= 0.825) { if(inBounds(x-1, y)) { out[0]=x-1; out[1]=y; out[2] = canvas[x-1][y]; } }
+        return out;
+    }
+
+    private double[] nextPixel(double[] pixel){
+        double[] out = new double[3];
+        double x = pixel[0];
+        double y = pixel[1];
+        double angle = pixel[2] * 2 * Math.PI;
+
+        out[0] = x + Math.cos(angle);
+        out[1] = y + Math.sin(angle);
+
+        if(out[0] < 0) out[0] = 0;
+        if(out[1] < 0) out[1] = 0;
+        if(out[0] >= getWidth()) out[0] = getWidth()-1;
+        if(out[1] >=  getHeight()) out[1] = getHeight()-1;
+        int newX = (int) Math.round(out[0]);
+        int newY = (int) Math.round(out[1]);
+        if(newX < 0) newX = 0;
+        if(newY < 0) newY = 0;
+        if(newX >= getWidth()) newX = getWidth()-1;
+        if(newY >=  getHeight()) newY = getHeight()-1;
+        out[2] = canvas[newX][newY];
+
         return out;
     }
 
