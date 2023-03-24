@@ -51,9 +51,9 @@ public class Canvas extends JPanel {
     }
 
     private double[][] MultipleNoises(){
-        double[][] result;
-        result = Noise(2, 2);
-        result = add(result, Noise(3, 2));
+        double[][] result = new double[imageSize.width][imageSize.height];
+//        result = Noise(2, 2);
+//        result = add(result, Noise(3, 2));
         result = add(result, Noise(4, 2));
         result = add(result, Noise(5, 2));
         result = add(result, Noise(6, 2));
@@ -144,26 +144,24 @@ public class Canvas extends JPanel {
         super.paintComponent(g);
 
         // Enter noise function
-//        DefaultPerlinNoise();
-//        IsohipsNoise();
-//        RainbowNoise();
         Noise2();
+        giveColors(0.67, 1.0);
 
         Image scaledImage = image.getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
         g.drawImage(scaledImage, 0, 0, null);
     }
 
-    private void DefaultPerlinNoise(Graphics g){
-//        g.drawImage(image, 0, 0, null);
-        g.setColor(Color.RED);
-        int spaces = 8;
-        for(int x = 0; x < canvas.length; x = x + spaces){
-            for(int y = 0; y < canvas[0].length; y = y + spaces){
-//                int length = 8;
-//                g.drawLine(x, y, x + (int)getCirclePosition(canvas[x][y], length)[0], y + (int)getCirclePosition(canvas[x][y], length)[1]);
-            }
-        }
-    }
+//    private void DefaultPerlinNoise(Graphics g){
+////        g.drawImage(image, 0, 0, null);
+//        g.setColor(Color.RED);
+//        int spaces = 8;
+//        for(int x = 0; x < canvas.length; x = x + spaces){
+//            for(int y = 0; y < canvas[0].length; y = y + spaces){
+////                int length = 8;
+////                g.drawLine(x, y, x + (int)getCirclePosition(canvas[x][y], length)[0], y + (int)getCirclePosition(canvas[x][y], length)[1]);
+//            }
+//        }
+//    }
 
     private void Noise1(){
         for(int x = 0; x < imageSize.width; x++) {
@@ -191,7 +189,6 @@ public class Canvas extends JPanel {
                             if(next[2] == Double.MIN_VALUE) break;
                         }
                         amount[x][y]--;
-//                        g.drawRect((int) next[0], (int) next[1], 1, 1);
                     }
                 }
             }
@@ -206,7 +203,8 @@ public class Canvas extends JPanel {
     }
 
     private void Noise2(){
-        int[][] values = new int[imageSize.width][imageSize.height];
+        double[][] values = new double[imageSize.width][imageSize.height];
+        double changeSpeed = 2;
 
         for(int x = 0; x < imageSize.width; x++) {
             for (int y = 0; y < imageSize.height; y++) {
@@ -221,16 +219,22 @@ public class Canvas extends JPanel {
                 for(int i = 0; i < 255; i++){
                     next = nextPixel(next);
                     if(next[0] != -1 && next[1] != -1 && values[(int) next[0]][(int) next[1]] > 0){
-                        values[(int) next[0]][(int) next[1]]--;
+                        values[(int) next[0]][(int) next[1]] -= changeSpeed;
+                        if(values[(int) next[0]][(int) next[1]] < 0) values[(int) next[0]][(int) next[1]] = 0;
                     }
                 }
             }
         }
 
+        coloring(values);
+    }
+
+    private void coloring(double[][] values){
         for(int x = 0; x < imageSize.width; x++) {
             for (int y = 0; y < imageSize.height; y++) {
-                Color color = new Color(values[x][y], values[x][y], values[x][y]);
-                image.setRGB(x, y, color.getRGB());
+//                int rgb = Color.HSBtoRGB((float) values[x][y]/256, 1, 1);
+                int rgb = new Color((int) values[x][y], (int) values[x][y], (int) values[x][y]).getRGB();
+                image.setRGB(x, y, rgb);
             }
         }
     }
@@ -253,6 +257,36 @@ public class Canvas extends JPanel {
             }
         }
     }
+
+    private void giveColors(){
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
+                Color brightness = new Color(image.getRGB(x ,y));
+                int rgb = Color.HSBtoRGB((float) brightness.getRed()/255, 1, 1);
+                image.setRGB(x, y, rgb);
+            }
+        }
+    }
+
+    private void giveColors(double minRGB, double maxRGB){
+        for(int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
+                Color brightness = new Color(image.getRGB(x ,y));
+                float hue = (float) mapValue((double)brightness.getRed()/255, minRGB, maxRGB);
+                System.out.println(hue);
+                int rgb = Color.HSBtoRGB(hue, 1, 1);
+                image.setRGB(x, y, rgb);
+            }
+        }
+    }
+
+    private double mapValue(double value, double min, double max) {
+        if (value < 0.0 || value > 1.0) {
+            throw new IllegalArgumentException("Value must be between 0 and 1");
+        }
+        return min + (max - min) * value;
+    }
+
 
     private double[] nextPixel8D(double[] pixel){
         double[] out = new double[3];
