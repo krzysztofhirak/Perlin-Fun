@@ -52,8 +52,8 @@ public class Canvas extends JPanel {
 
     private double[][] MultipleNoises(){
         double[][] result = new double[imageSize.width][imageSize.height];
-//        result = Noise(2, 2);
-//        result = add(result, Noise(3, 2));
+        result = Noise(2, 2);
+        result = add(result, Noise(3, 2));
         result = add(result, Noise(4, 2));
         result = add(result, Noise(5, 2));
         result = add(result, Noise(6, 2));
@@ -144,8 +144,10 @@ public class Canvas extends JPanel {
         super.paintComponent(g);
 
         // Enter noise function
-        Noise2();
-        giveColors(0.67, 1.0);
+        Noise2(100, 1.0);
+//        giveColors(0.14, 0.33);
+//        giveColors(Color.BLUE, Color.RED);
+        negative();
 
         Image scaledImage = image.getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
         g.drawImage(scaledImage, 0, 0, null);
@@ -202,9 +204,9 @@ public class Canvas extends JPanel {
         }
     }
 
-    private void Noise2(){
+    private void Noise2(int length, double speed){
         double[][] values = new double[imageSize.width][imageSize.height];
-        double changeSpeed = 2;
+        double changeSpeed = speed;
 
         for(int x = 0; x < imageSize.width; x++) {
             for (int y = 0; y < imageSize.height; y++) {
@@ -216,7 +218,7 @@ public class Canvas extends JPanel {
             for (int y = 0; y < imageSize.height; y++) {
                 double[] next = new double[3];
                 next[0] = x; next[1] = y; next[2] = canvas[x][y];
-                for(int i = 0; i < 255; i++){
+                for(int i = 0; i < length; i++){
                     next = nextPixel(next);
                     if(next[0] != -1 && next[1] != -1 && values[(int) next[0]][(int) next[1]] > 0){
                         values[(int) next[0]][(int) next[1]] -= changeSpeed;
@@ -273,9 +275,32 @@ public class Canvas extends JPanel {
             for (int y = 0; y < imageSize.height; y++) {
                 Color brightness = new Color(image.getRGB(x ,y));
                 float hue = (float) mapValue((double)brightness.getRed()/255, minRGB, maxRGB);
-                System.out.println(hue);
                 int rgb = Color.HSBtoRGB(hue, 1, 1);
                 image.setRGB(x, y, rgb);
+            }
+        }
+    }
+
+    private void giveColors(Color color1, Color color2){
+        float hue1 = Color.RGBtoHSB(color1.getRed(), color1.getGreen(), color1.getBlue(), null)[0];
+        float hue2 = Color.RGBtoHSB(color2.getRed(), color2.getGreen(), color2.getBlue(), null)[0];
+
+        for (int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
+                double value = image.getRGB(x, y);
+                float hue = hue1 + (hue2 - hue1) * (float)value;
+                int rgb = new Color(Color.HSBtoRGB(hue, 1, 1)).getRGB();
+                image.setRGB(x, y, rgb);
+            }
+        }
+    }
+
+    private void negative(){
+        for (int x = 0; x < imageSize.width; x++) {
+            for (int y = 0; y < imageSize.height; y++) {
+                Color oldColor = new Color(image.getRGB(x, y));
+                Color newColor = new Color(255 - oldColor.getRed(), 255 - oldColor.getGreen(), 255 - oldColor.getBlue());
+                image.setRGB(x, y, newColor.getRGB());
             }
         }
     }
@@ -300,8 +325,6 @@ public class Canvas extends JPanel {
         else if(pixel[2] <= 0.6875) { if(inBounds(x-1, y+1)) { out[0]=x-1; out[1]=y+1; out[2] = canvas[x-1][y+1]; } }
         else if(pixel[2] <= 0.8125) { if(inBounds(x-1, y)) { out[0]=x-1; out[1]=y; out[2] = canvas[x-1][y]; } }
         else if(pixel[2] <= 0.9375) { if(inBounds(x-1, y-1)) { out[0]=x-1; out[1]=y-1; out[2] = canvas[x-1][y-1]; } }
-//        else out[0] = -1; out[1] = -1; out[2] = -1;
-//        System.out.println(out[0] + " " + out[1] + " " + out[2]);
         return out;
     }
 

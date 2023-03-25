@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class MyMath {
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
@@ -9,6 +11,7 @@ public class MyMath {
     }
 
     public static int randInt(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+        Random random = new Random();
+        return (int) ((random.nextDouble() * (max - min)) + min);
     }
 }
